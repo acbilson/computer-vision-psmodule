@@ -28,9 +28,15 @@
 
 # Reads the settings from .\settings.json
 function Read-Settings {
+    
+    $filename = 'settings.json'
 
-    $settings = Get-Content -Path .\settings.json -Raw | ConvertFrom-Json
-    return $settings
+    if ((Test-Path $filename) -eq $false) {
+        return @{ success=$false; message='No settings.json file in this directory. Check help for this command for more information.'; settings=$null }
+    }
+
+    $settings = Get-Content -Path $filename -Raw | ConvertFrom-Json
+    return @{ success=$true; message=[String]::Empty(); settings=$settings }
 }
 
 # Simplifies the http request generation
@@ -137,7 +143,11 @@ function Request-AnalyzeImage {
     )
 
     # Retrieve settings from file
-    $settings = Read-Settings
+    $result = Read-Settings
+
+    if ($result.success -eq $false) { return $result.message }
+
+    $settings = $result.settings
 
     # Modify these to retrieve different information from the analysis
     $queryParams = @{
@@ -146,7 +156,7 @@ function Request-AnalyzeImage {
 
     $uri = New-HttpRequestUri -HostName $settings.host -Path '/vision/v2.0/analyze' -QueryParameter $queryParams
 
-    $response = curl `
+    $response = Invoke-WebRequest `
     -Uri $uri `
     -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"=$settings.key } `
     -Method POST `
@@ -207,7 +217,11 @@ function Request-RecognizeText {
     )
 
     # Retrieve settings from file
-    $settings = Read-Settings
+    $result = Read-Settings
+
+    if ($result.success -eq $false) { return $result.message }
+
+    $settings = $result.settings
 
     # Modify these to retrieve different information from the analysis
     $queryParams = @{
@@ -316,7 +330,11 @@ function Request-TagImage {
     )
 
     # Retrieve settings from file
-    $settings = Read-Settings
+    $result = Read-Settings
+
+    if ($result.success -eq $false) { return $result.message }
+
+    $settings = $result.settings
 
     # Modify these to retrieve different information from the analysis
     $queryParams = @{
@@ -374,7 +392,11 @@ function Request-GenerateThumbnail {
     )
 
     # Retrieve settings from file
-    $settings = Read-Settings
+    $result = Read-Settings
+
+    if ($result.success -eq $false) { return $result.message }
+
+    $settings = $result.settings
 
     # Modify these to retrieve different information from the analysis
     $queryParams = @{
