@@ -45,6 +45,7 @@ function New-HttpRequestUri
     return $uriRequest.Uri.OriginalString
 }
 
+# Analyzes the content of an image, returning information about category, tags, description, brands and more (edit to change information)
 function Request-AnalyzeImage {
     [CmdletBinding()]
     param 
@@ -71,6 +72,7 @@ function Request-AnalyzeImage {
     return $response
 }
 
+# Reads text in an image, returning both the OCR'd text and it's location in the image
 function Request-RecognizeText {
     [CmdletBinding()]
     param 
@@ -143,6 +145,33 @@ function Request-RecognizeText {
     return $response
 }
 
+# Returns only the tags, a subset of the analyize image functionality
+function Request-TagImage {
+    [CmdletBinding()]
+    param 
+    (
+        [Parameter(Mandatory = $true)]
+        [Byte[]]
+        $ImageBytes
+    )
+
+    # Modify these to retrieve different information from the analysis
+    $queryParams = @{
+        'language'='en'
+    }
+
+    $uri = New-HttpRequestUri -BaseUri $BASE_URI -Path '/vision/v2.0/tag' -QueryParameter $queryParams
+
+    $response = curl `
+    -Uri $uri `
+    -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"="66f52ef9ac114042bee47b446019147a" } `
+    -Method POST `
+    -UseBasicParsing `
+    -Body $ImageBytes
+
+    return $response
+}
+
 ########################################
 # Read image bytes and send request
 ########################################
@@ -150,7 +179,7 @@ function Request-RecognizeText {
 $imagePath = [System.IO.Path]::Combine($env:OneDriveCommercial, 'Archive\2019\GroceryProject\Images\test-image-cereal.png')
 $imageBytes = [System.IO.File]::ReadAllBytes($imagePath)
 
-$response = Request-RecognizeText -ImageBytes $imageBytes
+$response = Request-AnalyzeImage -ImageBytes $imageBytes
 
 $result = $null
 if ($response.StatusCode -eq 200)
