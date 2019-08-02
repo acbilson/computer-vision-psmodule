@@ -125,6 +125,7 @@ function Request-AnalyzeImage {
 
             Request-RecognizeText
             Request-TagImage
+            Request-GenerateThumbnail
 
     #>
     [CmdletBinding()]
@@ -194,6 +195,7 @@ function Request-RecognizeText {
 
             Request-AnalyzeImage
             Request-TagImage
+            Request-GenerateThumbnail
 
     #>
     [CmdletBinding()]
@@ -301,6 +303,7 @@ function Request-TagImage {
 
             Request-AnalyzeImage
             Request-RecognizeText
+            Request-GenerateThumbnail
 
     #>
     [CmdletBinding()]
@@ -332,6 +335,67 @@ function Request-TagImage {
     return $response
 }
 
+function Request-GenerateThumbnail {
+    <#
+        .SYNOPSIS
+
+            Returns a resized thumbnail of the image at 125x125 pixels with smart cropping.
+
+        .OUTPUTS
+
+            Returns a byte array.
+
+        .EXAMPLE
+
+            $imageBytes = [System.IO.File]::ReadAllBytes('C:\User\myusername\Images\test-image.png'); Request-GenerateThumbnail -ImageBytes $imageBytes
+
+            This retrieves results from a single image and returns a resized version of the same image as a byte array.
+
+        .EXAMPLE
+
+            $imageBytes = [System.IO.File]::ReadAllBytes('C:\User\myusername\Images\test-image.png'); $response = Request-GenerateThumbnail -ImageBytes $imageBytes; [System.IO.File]::WriteAllBytes(''C:\User\myusername\Images\thumbnail.png', $response.Content)
+
+            This retrieves results from a single image and returns the resized version of the same image as a byte array, and saves the new image to the same folder as a thumbnail.
+
+        .LINKS
+
+            Request-AnalyzeImage
+            Request-RecognizeText
+            Request-TagImage
+
+    #>
+    [CmdletBinding()]
+    param
+    (
+        # A byte array of the image. See example for how to retrieve image bytes.
+        [Parameter(Mandatory = $true)]
+        [Byte[]]
+        $ImageBytes
+    )
+
+    # Retrieve settings from file
+    $settings = Read-Settings
+
+    # Modify these to retrieve different information from the analysis
+    $queryParams = @{
+        'width'=125;
+        'height'=125;
+        'smartCropping'='true'
+    }
+
+    $uri = New-HttpRequestUri -HostName $settings.host -Path '/vision/v2.0/generateThumbnail' -QueryParameter $queryParams
+
+    $response = curl `
+    -Uri $uri `
+    -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"=$settings.key } `
+    -Method POST `
+    -UseBasicParsing `
+    -Body $ImageBytes
+
+    return $response
+}
+
 Export-ModuleMember -function Request-AnalyzeImage
 Export-ModuleMember -function Request-RecognizeText
 Export-ModuleMember -function Request-TagImage
+Export-ModuleMember -function Request-GenerateThumbnail
