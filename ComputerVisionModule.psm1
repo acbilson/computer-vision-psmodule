@@ -5,7 +5,7 @@
 
     Description:
 
-        This script module simplifies the use of the Computer Vision API to analyze images
+        This module simplifies the use of the Computer Vision API to analyze images.
 
     Setup:
 
@@ -18,9 +18,8 @@
             key: 'sfslkja;sldj;'
         }
 
-    host: no forward slashes
-    key: the subscription key given you by Microsoft when you register your account. MS supplies two keys; the first is fine
-
+        host: no forward slashes
+        key: the subscription key given you by Microsoft when you register your account. MS supplies two keys; the first is fine
 #>
 
 ########################################
@@ -34,29 +33,22 @@ function Read-Settings {
     return $settings
 }
 
-# Simplifies the http request
-function New-HttpRequestUri
-{
+# Simplifies the http request generation
+function New-HttpRequestUri {
     [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
-        [String]
-        $HostName,
+        [String]$HostName,
 
         [Parameter(Mandatory = $true)]
-        [String]
-        $Path,
+        [String]$Path,
 
         [Parameter(Mandatory = $false)]
-        [Hashtable]
-        $QueryParameters
+        [Hashtable]$QueryParameters
     )
-
-    # Add System.Web
     Add-Type -AssemblyName System.Web
 
-    # Create a http name value collection from an empty string
     $nvCollection = [System.Web.HttpUtility]::ParseQueryString([String]::Empty)
 
     foreach ($key in $QueryParameters.Keys)
