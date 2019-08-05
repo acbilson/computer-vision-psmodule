@@ -26,19 +26,6 @@
 # Helper Functions (not exported by module)
 ########################################
 
-# Reads the settings from .\settings.json
-function Read-Settings {
-    
-    $filename = 'settings.json'
-
-    if ((Test-Path $filename) -eq $false) {
-        return @{ success=$false; message='No settings.json file in this directory. Check help for this command for more information.'; settings=$null }
-    }
-
-    $settings = Get-Content -Path $filename -Raw | ConvertFrom-Json
-    return @{ success=$true; message=[String]::Empty(); settings=$settings }
-}
-
 # Simplifies the http request generation
 function New-HttpRequestUri {
     [CmdletBinding()]
@@ -47,7 +34,7 @@ function New-HttpRequestUri {
         [Parameter(Mandatory = $true)]
         [String]$HostName,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [String]$Path,
 
         [Parameter(Mandatory = $false)]
@@ -139,26 +126,27 @@ function Request-AnalyzeImage {
     (
         # A byte array of the image. See example for how to retrieve image bytes.
         [Parameter(Mandatory = $true)]
-        [Byte[]]$ImageBytes
+        [Byte[]]$ImageBytes,
+
+        # The host name of the Computer Vision (CV) API. Multiple geographies exist - defaults to west central U.S.
+        [Parameter(Mandatory = $false)]
+        [String]$CVAPIHostName = 'westcentralus.api.cognitive.microsoft.com',
+
+        # The secret Azure key for your Computer Vision (CV) API calls.
+        [Parameter(Mandatory = $true)]
+        [String]$CVAPIKey
     )
-
-    # Retrieve settings from file
-    $result = Read-Settings
-
-    if ($result.success -eq $false) { return $result.message }
-
-    $settings = $result.settings
 
     # Modify these to retrieve different information from the analysis
     $queryParams = @{
         'visualFeatures'='Brands,Categories,Description,Tags'
     }
 
-    $uri = New-HttpRequestUri -HostName $settings.host -Path '/vision/v2.0/analyze' -QueryParameter $queryParams
+    $uri = New-HttpRequestUri -HostName $CVAPIHostName -Path '/vision/v2.0/analyze' -QueryParameter $queryParams
 
     $response = Invoke-WebRequest `
     -Uri $uri `
-    -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"=$settings.key } `
+    -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"=$CVAPIKey } `
     -Method POST `
     -UseBasicParsing `
     -Body $ImageBytes
@@ -213,26 +201,27 @@ function Request-RecognizeText {
     (
         # A byte array of the image. See example for how to retrieve image bytes.
         [Parameter(Mandatory = $true)]
-        [Byte[]]$ImageBytes
-    )
+        [Byte[]]$ImageBytes,
 
-    # Retrieve settings from file
-    $result = Read-Settings
+         # The host name of the Computer Vision (CV) API. Multiple geographies exist - defaults to west central U.S.
+        [Parameter(Mandatory = $false)]
+        [String]$CVAPIHostName='westcentralus.api.cognitive.microsoft.com',
 
-    if ($result.success -eq $false) { return $result.message }
-
-    $settings = $result.settings
+        # The secret Azure key for your Computer Vision (CV) API calls.
+        [Parameter(Mandatory = $true)]
+        [String]$CVAPIKey
+   )
 
     # Modify these to retrieve different information from the analysis
     $queryParams = @{
         'mode'='Printed'
     }
 
-    $uri = New-HttpRequestUri -HostName $settings.host -Path '/vision/v2.0/recognizeText' -QueryParameter $queryParams
+    $uri = New-HttpRequestUri -HostName $CVAPIHostName -Path '/vision/v2.0/recognizeText' -QueryParameter $queryParams
 
     $response = curl `
     -Uri $uri `
-    -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"=$settings.key } `
+    -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"=$CVAPIKey } `
     -Method POST `
     -UseBasicParsing `
     -Body $ImageBytes
@@ -273,7 +262,7 @@ function Request-RecognizeText {
         # Retrieves the result of the API operation
         $response = curl `
         -Uri $resultRetrievalUri `
-        -Headers @{ "Ocp-Apim-Subscription-Key"="66f52ef9ac114042bee47b446019147a" } `
+        -Headers @{ "Ocp-Apim-Subscription-Key"=$CVAPIKey } `
         -Method GET `
         -UseBasicParsing
 
@@ -325,9 +314,16 @@ function Request-TagImage {
     (
         # A byte array of the image. See example for how to retrieve image bytes.
         [Parameter(Mandatory = $true)]
-        [Byte[]]
-        $ImageBytes
-    )
+        [Byte[]]$ImageBytes,
+
+         # The host name of the Computer Vision (CV) API. Multiple geographies exist - defaults to west central U.S.
+        [Parameter(Mandatory = $false)]
+        [String]$CVAPIHostName='westcentralus.api.cognitive.microsoft.com',
+
+        # The secret Azure key for your Computer Vision (CV) API calls.
+        [Parameter(Mandatory = $true)]
+        [String]$CVAPIKey
+   )
 
     # Retrieve settings from file
     $result = Read-Settings
@@ -341,11 +337,11 @@ function Request-TagImage {
         'language'='en'
     }
 
-    $uri = New-HttpRequestUri -HostName $settings.host -Path '/vision/v2.0/tag' -QueryParameter $queryParams
+    $uri = New-HttpRequestUri -HostName $CVAPIHostName -Path '/vision/v2.0/tag' -QueryParameter $queryParams
 
     $response = curl `
     -Uri $uri `
-    -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"=$settings.key } `
+    -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"=$CVAPIKey } `
     -Method POST `
     -UseBasicParsing `
     -Body $ImageBytes
@@ -387,16 +383,16 @@ function Request-GenerateThumbnail {
     (
         # A byte array of the image. See example for how to retrieve image bytes.
         [Parameter(Mandatory = $true)]
-        [Byte[]]
-        $ImageBytes
+        [Byte[]]$ImageBytes,
+
+         # The host name of the Computer Vision (CV) API. Multiple geographies exist - defaults to west central U.S.
+        [Parameter(Mandatory = $false)]
+        [String]$CVAPIHostName='westcentralus.api.cognitive.microsoft.com',
+
+        # The secret Azure key for your Computer Vision (CV) API calls.
+        [Parameter(Mandatory = $true)]
+        [String]$CVAPIKey
     )
-
-    # Retrieve settings from file
-    $result = Read-Settings
-
-    if ($result.success -eq $false) { return $result.message }
-
-    $settings = $result.settings
 
     # Modify these to retrieve different information from the analysis
     $queryParams = @{
@@ -405,11 +401,11 @@ function Request-GenerateThumbnail {
         'smartCropping'='true'
     }
 
-    $uri = New-HttpRequestUri -HostName $settings.host -Path '/vision/v2.0/generateThumbnail' -QueryParameter $queryParams
+    $uri = New-HttpRequestUri -HostName $CVAPIHostName -Path '/vision/v2.0/generateThumbnail' -QueryParameter $queryParams
 
     $response = curl `
     -Uri $uri `
-    -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"=$settings.key } `
+    -Headers @{ "Content-Type"="application/octet-stream"; "Ocp-Apim-Subscription-Key"=$CVAPIKey } `
     -Method POST `
     -UseBasicParsing `
     -Body $ImageBytes
