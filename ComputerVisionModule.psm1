@@ -325,13 +325,6 @@ function Request-TagImage {
         [String]$CVAPIKey
    )
 
-    # Retrieve settings from file
-    $result = Read-Settings
-
-    if ($result.success -eq $false) { return $result.message }
-
-    $settings = $result.settings
-
     # Modify these to retrieve different information from the analysis
     $queryParams = @{
         'language'='en'
